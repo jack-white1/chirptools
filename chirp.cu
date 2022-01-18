@@ -21,6 +21,7 @@
 struct signalParams{
   double sampleRate;
   unsigned long int signalLength;
+  char zeroBinAverageFlag;
 };
 
 struct chirpParams {
@@ -122,41 +123,46 @@ void complexParameterisedNoiseGenerator(struct noiseParams noise, struct signalP
   spectrum[0].x = 0.0;
   spectrum[0].y = 0.0;
 
-  /*
-  (spectrum[spectrumLength/2]).x = 0.0;
-  (spectrum[spectrumLength/2]).y = 0.0;
-  
-  for (long unsigned int i = 1; i < spectrumLength/2; i++){
-    //    omega_i = noise.cutoffLow + i*bandwidth/spectrumLength;
-    omega_i = i*signalParams.sampleRate/signalParams.signalLength;
-    U1 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
-    U2 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
-    Z0 = sqrt(-2*log(U1))*cos(2*M_PI*U2); //Box-Mueller transform
-    Z1 = sqrt(-2*log(U2))*sin(2*M_PI*U2); //I have plotted Z0,Z2 they are verified to be Gaussian
-    reComponent = Z0*sqrt(0.5*pow(1/omega_i,noise.beta/2));
-    imComponent = Z1*sqrt(0.5*pow(1/omega_i,noise.beta/2));
-    (spectrum[spectrumLength/2 + i]).x = reComponent; //positive frequency
-    (spectrum[spectrumLength/2 + i]).y = imComponent;
-    (spectrum[spectrumLength/2 - i]).x = reComponent; //negative frequency
-    (spectrum[spectrumLength/2 - i]).y = -imComponent;
-  }
-  */
+  double reTotal = 0.0;
+  double imTotal = 0.0;
   for (long unsigned int i = 1; i < signalParams.signalLength/2 + 1; i++){
     omega_i = i*signalParams.sampleRate/signalParams.signalLength;
     U1 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
     U2 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
     Z0 = sqrt(-2*log(U1))*cos(2*M_PI*U2); //Box-Mueller transform
-    Z1 = sqrt(-2*log(U2))*sin(2*M_PI*U2); //plotted Z0, Z1 they are verified to be Gaussian
+    Z1 = sqrt(-2*log(U1))*sin(2*M_PI*U2); //plotted Z0, Z1 they are verified to be Gaussian
     reComponent = Z0*sqrt(0.5*pow(1/omega_i,noise.beta/2));
     imComponent = Z1*sqrt(0.5*pow(1/omega_i,noise.beta/2));
     spectrum[i].x = reComponent;
     spectrum[i].y = imComponent;
+    reTotal = reTotal + reComponent;
+    imTotal = imTotal + imComponent;
+    //printf("%lf, %lf\n", spectrum[i].x, spectrum[i].y);
+    //printf("%lf, %lf\n", Z0, Z1);
   }
 
   for (long unsigned int i = 1; i < signalParams.signalLength/2; i++){
     spectrum[signalParams.signalLength/2+i].x = spectrum[signalParams.signalLength/2-i].x;
     spectrum[signalParams.signalLength/2+i].y = -spectrum[signalParams.signalLength/2-i].y;
   }
+  /*
+  if (signalParams.zeroBinAverageFlag == 1){
+    spectrum[0].x = reTotal/(signalParams.signalLength-1);
+    spectrum[0].y = imTotal/(signalParams.signalLength-1);
+    printf("0th bin: %lf, %lf\n", spectrum[0].x, spectrum[0].y);
+  }
+  */
+  
+  if (signalParams.zeroBinAverageFlag == 1){
+    U1 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
+    U2 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
+    Z0 = sqrt(-2*log(U1))*cos(2*M_PI*U2); //Box-Mueller transform
+    Z1 = sqrt(-2*log(U1))*sin(2*M_PI*U2); //plotted Z0, Z1 they are verified to be Gaussian
+    spectrum[0].x = Z0;
+    spectrum[0].y = Z1;
+    //printf("0th bin: %lf, %lf\n", spectrum[0].x, spectrum[0].y);
+  }
+  
   
   
   manual_C2Cinv_fftw(spectrum, noise.noisePtr, spectrumLength);
@@ -291,6 +297,7 @@ double AWGN_generator(double stdev){
     struct signalParams sample1;
     sample1.sampleRate   = 8000;
     sample1.signalLength = 20000;
+    sample1.zeroBinAverageFlag = 1;
 
     struct chirpParams chirp1;
     chirp1.chirpType     = (char) *argv[1]; //default P
