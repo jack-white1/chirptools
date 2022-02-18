@@ -129,7 +129,7 @@ void complexParameterisedNoiseGenerator(struct noiseParams noise, struct signalP
     omega_i = i*signalParams.sampleRate/signalParams.signalLength;
     U1 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
     U2 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
-    Z0 = sqrt(-2*log(U1))*cos(2*M_PI*U2); //Box-Mueller transform
+    Z0 = sqrt(-2*log(U1))*cos(2*M_PI*U2); //Box-Muller transform
     Z1 = sqrt(-2*log(U1))*sin(2*M_PI*U2); //plotted Z0, Z1 they are verified to be Gaussian
     reComponent = Z0*sqrt(0.5*pow(1/omega_i,noise.beta/2));
     imComponent = Z1*sqrt(0.5*pow(1/omega_i,noise.beta/2));
@@ -156,7 +156,7 @@ void complexParameterisedNoiseGenerator(struct noiseParams noise, struct signalP
   if (signalParams.zeroBinAverageFlag == 1){
     U1 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
     U2 = noise.noiseMultiplier*rand() / (double)RAND_MAX;
-    Z0 = sqrt(-2*log(U1))*cos(2*M_PI*U2); //Box-Mueller transform
+    Z0 = sqrt(-2*log(U1))*cos(2*M_PI*U2); //Box-Muller transform
     Z1 = sqrt(-2*log(U1))*sin(2*M_PI*U2); //plotted Z0, Z1 they are verified to be Gaussian
     spectrum[0].x = Z0;
     spectrum[0].y = Z1;
